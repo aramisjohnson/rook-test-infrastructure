@@ -9,7 +9,380 @@
 # Description:       provides infrastructure for testing rook
 ### END INIT INFO
 
+#Functction to check if pod is up
+#Takes atleast 2 paramaters
+#$1 - Pod name mask - required
+#$2 - number of pods expected to be up that match the pod name($1) - required
+#$3 - namespace the pods are expected to be in - optional
+pod::isUp(){
+  	x=1
+	while [ $x -le 15 ]
+	do
+	  if [ "$#" -eq 3 ]; then
+	  	declare -i y=$(kubectl get pods -n $3 2>/dev/null  | grep $2 | wc -l )
+	  else
+	  	declare -i y=$(kubectl get pods 2>/dev/null  | grep $1 | wc -l )
+	  fi
+	  if [ $y -ge $2 ]
+		then
+			break
+	 fi
+	  x=$(( $x + 1 ))
+	  sleep 10
+	done
 
+	if [ $x -gt 15 ]; then
+		retval=1
+	else
+		retval=0
+	fi
+
+	return $retval
+
+}
+
+#Functction to check if pod is in Running status or not
+#Takes atleast 2 paramaters
+#$1 - Pod name mask - required
+#$2 - number of pods expected to be in Running state that match the pod name($1) - required
+#$3 - namespace the pods are expected to be in - optional
+pod::isRunning(){
+  	x=1
+	while [ $x -le 15 ]
+	do
+	  if [ "$#" -eq 3 ]; then
+	  	declare -i y=$(kubectl get pods -n $3 2>/dev/null | grep $1 | awk '{print $3}' | grep Running | wc -l)
+	  else
+	  	declare -i y=$(kubectl get pod 2>/dev/null  | grep $1 | awk '{print $3}' | grep Running | wc -l)
+	  fi
+	  if [ $y -ge $2 ]
+		then
+			break
+	 fi
+	  x=$(( $x + 1 ))
+	  sleep 10
+	done
+
+	if [ $x -gt 15 ]; then
+		retval=1
+	else
+		retval=0
+	fi
+
+	return $retval
+}
+
+#function to check of kubernetes is started successfully via kubeadm
+k8s::isUp(){
+    #check etcd pod
+    pod::isUp etcd-kube-master 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "etcd pod started"
+	else
+	     echo "etcd pod not started"
+	     return 1
+	fi
+
+	pod::isRunning etcd-kube-master 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "etcd pod running"
+	else
+	     echo "etcd pod not running"
+	     return 1
+	fi
+
+    #check kube-controller-manager pod
+	pod::isUp kube-controller-manager 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-controller-manager pod started"
+	else
+	     echo "kube-controller-manager pod not started"
+	     return 1
+	fi
+
+	pod::isRunning kube-controller-manager 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-controller-manager pod running"
+	else
+	     echo "kube-controller-manager pod not running"
+	     return 1
+	fi
+
+	#check kube-discovery pod
+	pod::isUp kube-discovery 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-discovery pod started"
+	else
+	     echo "kube-discovery pod not started"
+	     return 1
+	fi
+
+	pod::isRunning kube-discovery 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-discovery pod running"
+	else
+	     echo "kube-discovery pod not running"
+	     return 1
+	fi
+
+	#check kube-apiserver pod
+	pod::isUp kube-apiserver 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-apiserver pod started"
+	else
+	     echo "kube-apiserver pod not started"
+	     return 1
+	fi
+
+	pod::isRunning kube-apiserver 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-apiserver pod running"
+	else
+	     echo "kube-apiserver pod not running"
+	     return 1
+	fi
+
+	#check kube-scheduler pod
+	pod::isUp kube-scheduler 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-scheduler pod started"
+	else
+	     echo "kube-scheduler pod not started"
+	     return 1
+	fi
+
+	pod::isRunning kube-scheduler 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-scheduler pod running"
+	else
+	     echo "kube-scheduler pod not running"
+	     return 1
+	fi
+
+	#check kube-dns pod
+	pod::isUp kube-dns 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-dns pod started"
+	else
+	     echo "kube-dns pod not started"
+	     return 1
+	fi
+
+	pod::isRunning kube-dns 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-dns pod running"
+	else
+	     echo "kube-dns pod not running"
+	     return 1
+	fi
+
+	#check kube-proxy pod
+	pod::isUp kube-proxy 3 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-proxy pod started"
+	else
+	     echo "kube-proxy pod not started"
+	     return 1
+	fi
+
+	pod::isRunning kube-proxy 3 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kube-proxy pod running"
+	else
+	     echo "kube-proxy pod not running"
+	     return 1
+	fi
+
+	#check kubernetes-dashboard pod
+	pod::isUp kubernetes-dashboard 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kubernetes-dashboard pod started"
+	else
+	     echo "kubernetes-dashboard pod not started"
+	     return 1
+	fi
+
+	pod::isRunning kubernetes-dashboard 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "kubernetes-dashboard pod running"
+	else
+	     echo "kubernetes-dashboard pod not running"
+	     return 1
+	fi
+
+	#check dummy pod
+	pod::isUp dummy 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "dummy pod started"
+	else
+	     echo "dummy pod not started"
+	     return 1
+	fi
+
+	pod::isRunning dummy 1 kube-system
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "dummy pod running"
+	else
+	     echo "dummy pod not running"
+	     return 1
+	fi
+
+return 0
+
+}
+#function to check of rook operator is up
+rookOperator::isUp(){
+    pod::isUp rook-operator 1
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+    	echo "rook-operator Started"
+	else
+     	echo "rook-operator Not Started"
+     	return 1
+	fi
+
+	pod::isRunning rook-operator 1
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-operator Running"
+	else
+	     echo "rook-operator Not Running"
+	     return 1
+	fi
+
+	return 0
+}
+
+
+#function to check of rook cluster is up
+rookCluster::isUp(){
+    pod::isUp mon 3 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-cluster monitors started"
+	else
+	     echo "rook-cluster monitors not started"
+	     return 1
+	fi
+
+	pod::isRunning mon 3 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-cluster monitors running"
+	else
+	     echo "rook-cluster monitors not running"
+	     return 1
+	fi
+
+
+	pod::isUp rook-api 1 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-cluster rook-api started"
+	else
+	     echo "rook-cluster rook-api not started"
+	     return 1
+	fi
+
+	pod::isRunning rook-api 1 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-cluster rook-api Running"
+	else
+	     echo "rook-cluster rook-api not running"
+	     return 1
+	fi
+
+	pod::isUp osd 2 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-cluster osd started"
+	else
+	     echo "rook-cluster rook-api not started"
+	     return 1
+	fi
+
+	pod::isRunning osd 2 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-cluster osd running"
+	else
+	     echo "rook-cluster osd not running"
+	     return 1
+	fi
+
+	return 0
+
+}
+
+#function to check of rook client is up
+rookClient::isUp(){
+    pod::isUp rook-client 1 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+    	echo "rook-client Started"
+	else
+     	echo "rook-client Not Started"
+     	return 1
+	fi
+
+	pod::isRunning rook-client 1 rook
+	iretval=$?
+	if [ "$retval" == 0 ]
+	then
+	     echo "rook-client Running"
+	else
+	     echo "rook-client Not Running"
+	     return 1
+	fi
+
+	return 0
+}
 
 
 case "$1" in
@@ -43,8 +416,8 @@ case "$1" in
 
 #kubectl delete node kube-node-2 --force
 
-
-#WAIT --> add real wait code here
+ # Wait for kubernetes to come up
+ # k8s::isUp
  #   sleep 20
 
      #PATCH KUBE-CONTROLLER-MANAGER
@@ -60,16 +433,17 @@ case "$1" in
 
 
 #    kubectl create -f rook/rook-operator.yaml
-
-#WAIT --> add real wait code here
+    #rookOperator::isUp
     #sleep 30
 
     #kubectl create -f rook/rook-cluster.yaml
 
-#WAIT --> add real wait code here
+    # wait for rook cluster to be up
+    #rookCluster::isUp
     #sleep 100
 
-#kubectl create -f rook/rook-pool.yaml
+    ##kubectl create -f rook/rook-client.yaml
+    #rookClient::isUp
     #sleep 10
 
 
