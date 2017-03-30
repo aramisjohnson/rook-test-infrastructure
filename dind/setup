@@ -14,6 +14,7 @@
 
 case "$1" in
  start)
+    export HOME=/home/root
     export DEBIAN_FRONTEND=noninteractive
     export LC_ALL=C
     docker info #--> need better way to determine docker is ready
@@ -26,44 +27,50 @@ case "$1" in
 
     cd rookStartUpScripts/
 
-    #install kubeadm
-    apt-get install -y kubeadm
+    chmod +x rook-dind-cluster-v1.5.sh
 
-    kubeadm init --skip-preflight-checks
+ #   sleep 15
+
+    #./rook-dind-cluster-v1.5.sh up
 
     #untaint
-    kubectl taint nodes --all dedicated-
+    #kubectl taint nodes --all dedicated-
+
+ #   sleep 5
+
+#add drain
+#kubectl drain kube-node-2 --force --ignore-daemonsets
+
+#kubectl delete node kube-node-2 --force
+
 
 #WAIT --> add real wait code here
+ #   sleep 20
 
-    #install weave
-    #kubectl apply -f https://git.io/weave-kube
+     #PATCH KUBE-CONTROLLER-MANAGER
+  #   yes | cp -rf kube-controller-manager.json $(find /var/lib/docker/aufs/mnt -type f -name kube-controller-manager.json)
+
+
+   # sleep 5
+
+#TODO --> update rook operator with image pull location and tag
+
+#INSTALL CEPH IN ALL NODES
+#curl --unix-socket /var/run/docker.sock http:/containers/json | jq -r '.[].Id' | xargs -i docker exec -i {} bash -c 'apt-get -y update && apt-get install -qqy ceph-common'
+
+
+#    kubectl create -f rook/rook-operator.yaml
 
 #WAIT --> add real wait code here
-    sleep 60
+    #sleep 30
 
-     #patch controller
-     yes | cp -rf kube-controller-manager.json /etc/kubernetes/manifests/
-
-    sleep 5
-
-    #TODO --> update rook operator with image pull location and tag
-
-    kubectl create -f rook/rook-operator.yaml
-
-#WAIT --> add real wait code here
-    sleep 30
-
-    #update rook cluster with image pull location and tag
-
-    kubectl create -f rook/rook-cluster.yaml
+    #kubectl create -f rook/rook-cluster.yaml
 
 #WAIT --> add real wait code here
     #sleep 100
 
-    #install storage class
-    #export MONS=$(kubectl -n rook get pod mon0 mon1 mon2 -o json|jq ".items[].status.podIP"|tr -d "\""|sed -e 's/$/:6790/'|paste -s -d, -)
-    #sed 's#INSERT_HERE#'$MONS'#' rook/rook-storageclass.yaml | kubectl create -f -
+#kubectl create -f rook/rook-pool.yaml
+    #sleep 10
 
 
     echo Rook Test infrastructure setup is complete!!!
