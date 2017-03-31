@@ -1,0 +1,57 @@
+#!/bin/sh
+
+
+
+  export HOME=/home/root
+  export DEBIAN_FRONTEND=noninteractive
+  export LC_ALL=C
+
+    docker info
+
+    #Docker import the image there, with ci:latest or something
+    docker load < $(find /from-host/ -type f -name *.tar)
+
+    #Git download test repo --> templates, rook-*.yamls, controller.yaml
+    git clone https://github.com/dangula/rookStartUpScripts.git
+
+    cd rookStartUpScripts/
+
+    chmod +x rook-dind-cluster-v1.5.sh
+
+    ./rook-dind-cluster-v1.5.sh up
+
+    #untaint
+    kubectl taint nodes --all dedicated-
+
+    sleep 5
+
+    #add drain
+    kubectl drain kube-node-2 --force --ignore-daemonsets
+
+    sleep 5
+
+    kubectl delete node kube-node-2 --force
+
+    sleep 5
+
+     #PATCH KUBE-CONTROLLER-MANAGER
+     yes | cp -rf kube-controller-manager.json $(find /var/lib/docker/aufs/mnt -type f -name kube-controller-manager.json)
+
+     sleep 5
+
+     #INSTALL CEPH IN ALL NODES
+     curl --unix-socket /var/run/docker.sock http:/containers/json | jq -r '.[].Id' | xargs -i docker exec -i {} bash -c 'apt-get -y update && apt-get install -qqy ceph-common'
+
+    kubectl create -f rook/rook-operator.yaml
+
+#-->DIVESH ADD WAIT FOR RUNNING THEN UNCOMMENT
+
+#kubectl create -f rook/rook-cluster.yaml
+
+#-->DIVESH ADD WAIT FOR RUNNING THEN UNCOMMENT
+
+#kubectl create -f rook/rook-pool.yaml
+
+
+
+    echo Rook Test infrastructure setup is complete!!! > /done.txt
