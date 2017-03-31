@@ -5,12 +5,17 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i "s/^exit 101$/exit 0/" /usr/sbin/policy-rc.d
 
-#RUN echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
+#RUN echo "nameserver 10.211.55.1" | tee /etc/resolv.conf > /dev/null
+RUN echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
+#RUN systemctl daemon-reload
+#RUN systemctl restart docker
+
 RUN apt-get -y clean
 
 
 # Install common dependencies
-RUN apt-get update -qq && apt-get install -qqy \
+RUN apt-get -y update
+RUN apt-get install -qqy \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -23,10 +28,16 @@ RUN apt-get update -qq && apt-get install -qqy \
     software-properties-common \
     git
 
+COPY setup-rook-test-infra /usr/bin/setup-rook-test-infra
 
-COPY setup /etc/init.d/setup-rook-infra
-RUN chmod +x /etc/init.d/setup-rook-infra
-RUN update-rc.d setup-rook-infra defaults
+RUN chown root /usr/bin/setup-rook-test-infra
+RUN chmod 755 /usr/bin/setup-rook-test-infra
+
+
+
+#COPY setup /etc/init.d/setup-rook-infra
+#RUN chmod +x /etc/init.d/setup-rook-infra
+#RUN update-rc.d setup-rook-infra defaults
 
 #Delete systemd services we do not need
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
@@ -72,10 +83,18 @@ RUN apt-get update -qq && apt-get install -qqy \
 #Install ceph-common
 RUN apt-get install -qqy ceph-common
 
+#COPY rc.local /etc/rc.local
+#RUN chown root /etc/rc.local
+#RUN chmod 755 /etc/rc.local
 
 VOLUME /sys/fs/cgroup
 VOLUME /lib/modules
 VOLUME /var/lib/docker
+VOLUME /sys
+#VOLUME /var/run/docker.sock
+
+
+#RUN ln -s /var/run/docker.sock /docker.sock
 
 EXPOSE 8080
 
