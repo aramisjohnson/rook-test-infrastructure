@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN sed -i "s/^exit 101$/exit 0/" /usr/sbin/policy-rc.d
 
 #RUN echo "nameserver 10.211.55.1" | tee /etc/resolv.conf > /dev/null
-RUN echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
+#RUN echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
 #RUN systemctl daemon-reload
 #RUN systemctl restart docker
 
@@ -34,9 +34,11 @@ RUN apt-get -y clean && apt-get -y update && apt-get install -qqyf \
 # Step 2 - Add Docker stable repository
 # Step 3 - Install pinned & tested version of Docker-CE
 # Step 4 - Delete the docker.sock
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - &&\
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" &&\
-    apt-get update -qq && apt-get install -qqy docker-ce=17.03.0~ce-0~ubuntu-xenial &&\
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+RUN add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+RUN apt-get update -qq && apt-get install -qqy docker-ce=17.03.0~ce-0~ubuntu-xenial &&\
     rm -rfv /var/run/docker.sock
 #*****************************************
 
