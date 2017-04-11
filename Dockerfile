@@ -18,8 +18,8 @@ RUN apt-get -y clean && apt-get -y update && apt-get install -qqyf \
     ca-certificates \
     lxc \
     iptables \
-    linux-image-$(uname -r) \
-    linux-image-extra-$(uname -r) \
+    #linux-image-$(uname -r) \
+    #linux-image-extra-$(uname -r) \
     linux-image-extra-virtual \
     jq \
     software-properties-common \
